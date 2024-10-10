@@ -9,9 +9,13 @@ from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.feature_selection import r_regression
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import confusion_matrix
 
 sb.set_theme(style="darkgrid")
 
@@ -98,11 +102,13 @@ print("Pearson Correlation Coefficients are",reg)
 my_scaler = StandardScaler()
 my_scaler.fit(X_train.iloc[:,0:3])
 scaled_data_train = my_scaler.transform(X_train.iloc[:,0:3])
-scaled_data_train_df = pd.DataFrame(scaled_data_train, columns=X_train.columns[0:3])
+scaled_data_train_df = pd.DataFrame(scaled_data_train, 
+                                    columns=X_train.columns[0:3])
 X_train = scaled_data_train_df.join(X_train.iloc[:,3:])
 
 scaled_data_test = my_scaler.transform(X_test.iloc[:,0:3])
-scaled_data_test_df = pd.DataFrame(scaled_data_test, columns=X_test.columns[0:3])
+scaled_data_test_df = pd.DataFrame(scaled_data_test, 
+                                   columns=X_test.columns[0:3])
 X_test = scaled_data_test_df.join(X_test.iloc[:,3:])
 
 
@@ -113,13 +119,95 @@ fig6=sb.heatmap(np.abs(corr_matrix),annot=True)
 fig6.set_title('Correlation matrix')
 #sb.pairplot(strat_df_train)
 
-fig1, axs=plt.subplots(2,2,figsize=(10,10))
-#fig1.set_dpi(1000)
-scaled_data_train_df.hist('X', ax=axs[0,0],bins=10)
-axs[0,0].set_title('X Histogram')
-scaled_data_train_df.hist('Y', ax=axs[0,1],bins=10)
-axs[0,1].set_title('Y Histogram')
-scaled_data_train_df.hist('Z', ax=axs[1,0],bins=10)
-axs[1,0].set_title('Z Histogram')
+# fig1, axs=plt.subplots(2,2,figsize=(10,10))
+# #fig1.set_dpi(1000)
+# scaled_data_train_df.hist('X', ax=axs[0,0],bins=10)
+# axs[0,0].set_title('X Histogram')
+# scaled_data_train_df.hist('Y', ax=axs[0,1],bins=10)
+# axs[0,1].set_title('Y Histogram')
+# scaled_data_train_df.hist('Z', ax=axs[1,0],bins=10)
+# axs[1,0].set_title('Z Histogram')
+
+"""ML Model 1 - Linear Regression"""
+linear_reg = LinearRegression()
+param_grid_lr = {}  # No hyperparameters to tune for plain linear regression, but you still apply GridSearchCV.
+grid_search_lr = GridSearchCV(linear_reg, param_grid_lr, cv=5, 
+                              scoring='neg_mean_absolute_error', 
+                              n_jobs=-1)
+
+grid_search_lr.fit(X_train, y_train)
+
+best_model_lr = grid_search_lr.best_estimator_
+print("\nBest Linear Regression Model:", best_model_lr)
+
+
+
+"""ML Model 2 - Random Forest"""
+
+forest_reg = RandomForestRegressor()
+
+param_grid_rf = [
+  {'n_estimators': [3, 10, 30],
+   'max_features': [2, 4, 6, 8]},
+  {'bootstrap': [False], 
+   'n_estimators': [3, 10], 
+   'max_features': [2, 3, 4]},
+  ]
+
+grid_search_rf = GridSearchCV(forest_reg, param_grid_rf, cv=5,
+                            scoring='neg_mean_squared_error',
+                            return_train_score=True)
+
+grid_search_rf.fit(X_train,y_train)
+
+best_model_rf = grid_search_rf.best_estimator_
+print("\nBest Random Forest Model:", best_model_rf)
+
+feature_importances_rf = grid_search_rf.best_estimator_.feature_importances_
+print("\nRandom Forest Feature Importance:", feature_importances_rf)
+
+
+
+
+"""ML Model 3 - Decision Tree"""
+decision_tree = DecisionTreeRegressor(random_state=5)
+
+param_grid_dt = {
+    'max_depth': [None, 10, 20, 30],
+    'min_samples_split': [2, 5, 10],
+    'min_samples_leaf': [1, 2, 4]
+}
+grid_search_dt = RandomizedSearchCV(decision_tree, param_grid_dt, cv=5,
+                            scoring='neg_mean_squared_error',
+                            n_jobs=-1)
+
+grid_search_dt.fit(X_train,y_train)
+
+best_model_dt = grid_search_dt.best_estimator_
+print("\nBest Decision Tree Model:", best_model_dt)
+
+feature_importances_dt = grid_search_dt.best_estimator_.feature_importances_
+print("\nDecision Tree Feature Importance:", feature_importances_dt)
+
+
+
+
+"""ML Model 4 - Support Vector Machine"""
+svr = SVR()
+param_grid_svr = {
+    'kernel': ['linear', 'rbf'],
+    'C': [0.1, 1, 10, 100],
+    'gamma': ['scale', 'auto']
+}
+
+grid_search_svr = GridSearchCV(svr, param_grid_svr, cv=5, 
+                               scoring='neg_mean_absolute_error', 
+                               n_jobs=-1)
+
+grid_search_svr.fit(X_train, y_train)
+
+best_model_svr = grid_search_svr.best_estimator_
+print("\nBest SVM Model:", best_model_svr)
+
 
 
