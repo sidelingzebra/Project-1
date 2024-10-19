@@ -31,6 +31,7 @@ from sklearn.svm import SVC
 from matplotlib import colormaps
 from pandas.plotting import scatter_matrix
 from sklearn.ensemble import StackingClassifier
+import joblib
 
 
 
@@ -39,16 +40,7 @@ sb.set_theme(style="darkgrid")
 """Step 1: Data In"""
 df=pd.read_csv("Project_1_Data.csv")
 
-
-
-
-
-
-
 """Step 2: Visalizing Data"""
-
-
-
 
     #Before visalizing, split data between train & test
     
@@ -71,15 +63,9 @@ X_train = strat_df_train.drop("Step", axis = 1)
 y_train = strat_df_train["Step"]
 
 
+
 X_test = strat_df_test.drop("Step", axis = 1)
 y_test = strat_df_test["Step"]
-
-
-
-
-
-
-
 
 
     #Creating histograms of split data
@@ -145,8 +131,6 @@ scaled_data_train_df = pd.DataFrame(scaled_data_train,
                                     columns=X_train.columns[0:3])
 X_train = scaled_data_train_df.join(X_train.iloc[:,3:])
 
-print(scaled_data_train_df)
-
 
 scaled_data_test = my_scaler.transform(X_test.iloc[:,0:3])
 scaled_data_test_df = pd.DataFrame(scaled_data_test, 
@@ -166,7 +150,7 @@ fig6.set_title('Correlation matrix')
 
 """ML Model 1 - Linear Regression"""
 linear_reg = LogisticRegression()
-param_grid_lr = {}  # No hyperparameters to tune for plain linear regression, but you still apply GridSearchCV.
+param_grid_lr = {}
 grid_search_lr = GridSearchCV(linear_reg, param_grid_lr, cv=5, 
                               scoring='neg_mean_absolute_error', 
                               n_jobs=-1)
@@ -228,8 +212,6 @@ print("\n",classification_report(rf_prediction, y_test))
 
 
 
-
-
 """ML Model 3 - Decision Tree"""
 decision_tree = DecisionTreeClassifier(random_state=24)
 
@@ -257,10 +239,7 @@ ax.set_title('Decision Tree Confusion Matrix')
 plt.show()
 
 
-# print(confusion_matrix(dt_prediction, y_test))
 print("\n",classification_report(dt_prediction, y_test))
-
-
 
 
 
@@ -296,34 +275,42 @@ plt.show()
 print("\n",classification_report(svc_prediction, y_test))
 
 
-
-
-
-
-
-
-
-"""StackingClassifer"""
-
+"""Step 6: StackingClassifer"""
 stack = StackingClassifier(
     estimators=[
-        ('lr', LogisticRegression(random_state=42)),
-        ('rf', RandomForestClassifier(random_state=42))
+        ('lr', DecisionTreeClassifier(random_state=42)),
+        ('rf', SVC())
     ],
     final_estimator=RandomForestClassifier(random_state=43),
-    cv=5  # number of cross-validation folds
+    cv=5
 )
 stack.fit(X_train, y_train)
 
 
 stack_prediction = stack.predict(X_test)
 print("\nStack Accuracy Score:", accuracy_score(stack_prediction, y_test))
-#Support Vector Machine Confusion Matrix
+
+
 fig, ax=plt.subplots(1,1,figsize=(6, 6), dpi = 500)
 ConfusionMatrixDisplay.from_predictions(stack_prediction, 
                                             y_test,cmap=plt.cm.BuPu,ax=ax)
 ax.set_title('Stack Confusion Matrix')
 plt.show()
 
-
+"""Step 7: Model Evaluation"""
 print("\n",classification_report(stack_prediction, y_test))
+
+joblib.dump(grid_search_dt, "Model.joblib")
+
+decision_tree_loaded=joblib.load("Model.joblib")
+
+test=pd.read_csv("Project_1_Data_Test.csv")
+
+
+scaled_data_testing = my_scaler.transform(test.iloc[:,0:3])
+scaled_data_test_df = pd.DataFrame(scaled_data_testing, 
+                                    columns=test.columns[0:3])
+X_testing = scaled_data_test_df.join(test.iloc[:,3:])
+
+predictions = decision_tree_loaded.predict(X_testing)
+print(predictions)
