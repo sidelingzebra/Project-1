@@ -84,29 +84,31 @@ fig2.set_dpi(1000)
 x1=A[:,0]
 y1=A[:,1]
 z1=A[:,2]
-fig2=ax.scatter(x1,y1,z1,c=A[:,3])
+fig2=ax.scatter(x1,y1,z1,c=A[:,3],cmap=plt.cm.viridis)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 ax.set_title('3D Scatter Plot')
-ax.legend(*fig2.legend_elements(),loc='upper center',ncol=4,bbox_to_anchor=(0.5, -0.05) )
+ax.legend(*fig2.legend_elements(),ncol=6,
+          bbox_to_anchor=(1, 1) )
 plt.show(fig2)
 
 
 """Step 3: Correlation Analysis"""
     #Creating regressions of Features & Target 
+    
 plt.figure(figsize=(6, 6),dpi = 500)
 fig3=sb.regplot(data=strat_df_train,x="Step",y="X")
-fig3.set_title('X Regression')
-plt.show()
+fig3.set_title('X-Coordinate vs. Maintenance Step')
+plt.show(fig3)
 plt.figure(figsize=(6, 6),dpi = 500)
 fig4=sb.regplot(data=strat_df_train,x="Step",y="Y")
-fig4.set_title('Y Regression')
-plt.show()
+fig4.set_title('Y-Coordinate vs. Maintenance Step')
+plt.show(fig4)
 plt.figure(figsize=(6, 6),dpi = 500)
 fig5=sb.regplot(data=strat_df_train,x="Step",y="Z")
-fig5.set_title('Z Regression')
-plt.show()
+fig5.set_title('Z-Coordinate vs. Maintenance Step')
+plt.show(fig5)
 
 
 
