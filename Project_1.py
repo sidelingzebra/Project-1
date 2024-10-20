@@ -48,7 +48,6 @@ df=pd.read_csv("Project_1_Data.csv")
 df["Split"] = pd.cut(df["Step"],
                           bins=[0, 2, 4, 6, np.inf],
                           labels=[1, 2, 3, 4])
-
 Split_1=StratifiedShuffleSplit (n_splits=1,test_size=0.3,random_state=24)
 
     #Removing split col that was added for SRS
@@ -61,9 +60,6 @@ strat_df_test = strat_df_test.drop(columns=["Split"], axis = 1)
     #Split data into X & Y
 X_train = strat_df_train.drop("Step", axis = 1)
 y_train = strat_df_train["Step"]
-
-
-
 X_test = strat_df_test.drop("Step", axis = 1)
 y_test = strat_df_test["Step"]
 
@@ -82,17 +78,18 @@ axs[1,1].set_title('Step Histogram')
 
     #3D plot creation
 A=strat_df_train.to_numpy()
-fig2 = plt.figure(figsize=(10,10))
+fig2 = plt.figure(figsize=(8,8))
 ax=fig2.add_subplot(projection='3d')
 fig2.set_dpi(1000)
 x1=A[:,0]
 y1=A[:,1]
 z1=A[:,2]
-ax.scatter(x1,y1,z1)
+fig2=ax.scatter(x1,y1,z1,c=A[:,3])
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 ax.set_title('3D Scatter Plot')
+ax.legend(*fig2.legend_elements(),loc='upper center',ncol=4,bbox_to_anchor=(0.5, -0.05) )
 plt.show(fig2)
 
 
@@ -111,11 +108,6 @@ fig5=sb.regplot(data=strat_df_train,x="Step",y="Z")
 fig5.set_title('Z Regression')
 plt.show()
 
-
-attributes = ["X", "Y", "Z"]
-scatter_matrix(strat_df_train[attributes], figsize=(16, 16))
-
-plt.show()
 
 
     #Calculating Pearson Correlation for X, Y, Z with Step
